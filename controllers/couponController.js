@@ -118,7 +118,14 @@ const getall = async (req, res) => {
     // Fetch coupons based on filters
     const coupons = await Coupon.find(filter);
 
-    res.status(200).json(coupons);
+    // Get owner addresses for each coupon
+    const couponsWithAddress = await Promise.all(coupons.map(async (coupon) => {
+      const owner = await User.findById(coupon.ownerId);
+      const ownerAddress = owner.data.shop_name + ", " + owner.data.shop_city + ", " + owner.data.shop_state + ", " + owner.data.shop_pincode;
+      return { ...coupon._doc, ownerAddress };
+    }));
+
+    res.status(200).json(couponsWithAddress);
   } catch (error) {
     res.status(500).json({
       message: 'Error fetching coupons',
@@ -134,11 +141,14 @@ const getbyid = async (req, res) => {
 
     // Find the coupon by ID
     const coupon = await Coupon.findById(id);
+    const owner = await User.findById(coupon.ownerId);
+    const ownerAddress = owner.data.shop_name + ", " + owner.data.shop_city + ", " + owner.data.shop_state + ", " + owner.data.shop_pincode;
+
     if (!coupon) {
       return res.status(404).json({ message: 'Coupon not found' });
     }
 
-    res.status(200).json(coupon);
+    res.status(200).json({...coupon._doc, ownerAddress});
   } catch (error) {
     res.status(500).json({
       message: 'Error fetching coupon',
