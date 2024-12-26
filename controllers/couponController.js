@@ -84,48 +84,60 @@ const create = async (req, res) => {
 
 const getall = async (req, res) => {
   try {
-    const city = req.query.city;  // Get the city from the query parameter
     const search = req.query.search; // Get the search text from the query parameter
+    console.log(req.user);
+    var coupons;
 
     let filter = {};
 
-    // If user is authenticated
-    if (req.user) {
-      // Filter for partner type
+    if (!req.user) {
+      // Get city from query and find owners in that city
+      const city = req.query.city;
+      let filter = {};
+      
+      if (city && city !== 'all') {
+        // Find owners in the specified city using case-insensitive regex
+        const ownersInCity = await User.find({ 'data.shop_city': { $regex: new RegExp('^' + city + '$', 'i') } });
+        const ownerIdsInCity = ownersInCity.map(owner => owner._id);
+        filter.ownerId = { $in: ownerIdsInCity };
+      }
+
+      // Get coupons based on the filter
+      const coupons = await Coupon.find(filter); // remove consumersId field from coupon
+
+      // Add owner address details to each coupon
+      const couponsWithAddress = await Promise.all(coupons.map(async (coupon) => {
+        const owner = await User.findById(coupon.ownerId);
+        let ownerAddress = "Address not available";
+        if (owner && owner.data) {
+          ownerAddress = owner.data.shop_name + ", " + owner.data.shop_city + ", " + owner.data.shop_state + ", " + owner.data.shop_pincode;
+        }
+        return { ...coupon._doc, ownerAddress };
+      }));
+
+      res.status(200).json(couponsWithAddress);
+    } else {
+      // Logic for authenticated users
       if (req.user.type === 'partner') {
+        // Partner specific logic
         const couponIdList = req.user.createdCouponsId;
         filter._id = { $in: couponIdList };
+      } else {
+        // Non-partner authenticated user logic
+        if (city && city !== 'all') {
+          const usersInCity = await User.find({ 'data.shop_city': { $regex: new RegExp('^' + city + '$', 'i') } });
+          const userIdsInCity = usersInCity.map(user => user._id);
+          filter.ownerId = { $in: userIdsInCity };
+        }
+
+        if (search) {
+          filter.title = { $regex: search, $options: 'i' };
+        }
       }
+      coupons = await Coupon.find(filter);
     }
 
-    // Apply city filter for both authenticated and non-authenticated requests
-    if (city && city !== 'all') {
-      const usersInCity = await User.find({ 'data.shop_city': city });
-      const userIdsInCity = usersInCity.map(user => user._id);
-      filter.ownerId = { $in: userIdsInCity };
-    }
-
-    // Add a partial match filter for title if search text is provided
-    if (search) {
-      filter.title = { $regex: search, $options: 'i' }; // Case-insensitive partial match
-    }
-
-    // Only show active coupons for non-authenticated users
-    if (!req.user) {
-      filter.active = true;
-    }
-
-    // Fetch coupons based on filters
-    const coupons = await Coupon.find(filter);
-
-    // Get owner addresses for each coupon
-    const couponsWithAddress = await Promise.all(coupons.map(async (coupon) => {
-      const owner = await User.findById(coupon.ownerId);
-      const ownerAddress = owner.data.shop_name + ", " + owner.data.shop_city + ", " + owner.data.shop_state + ", " + owner.data.shop_pincode;
-      return { ...coupon._doc, ownerAddress };
-    }));
-
-    res.status(200).json(couponsWithAddress);
+    res.status(200).json(coupons);
   } catch (error) {
     res.status(500).json({
       message: 'Error fetching coupons',

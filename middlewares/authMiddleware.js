@@ -6,6 +6,7 @@ const authMiddleware = async (req, res, next) => {
   try {
     // Get the token from the Authorization header
     const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    // console.log(token);
 
     if (!token) {
       // If no token, set user as null and continue
