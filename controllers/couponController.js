@@ -307,16 +307,18 @@ const updateCouponState = async (req, res) => {
 
 const getAvailedCoupon = async (req, res) => {
   try {
+    console.log(req.user.availedCouponsId);
     let data = [];
     if (req.user.availedCouponsId != undefined) {
       for (let availedCoupon of req.user.availedCouponsId) {
         // console.log(availedCoupons.consumerId);
         // console.log(availCoupon)
         const coupon = await Coupon.findById(availedCoupon.couponId);
+        const owner = await User.findById(coupon.ownerId);
         // console.log(availedCoupon, coupon);
         console.log(coupon);
         data.push({
-          ...coupon._doc, ...availedCoupon._doc
+          ...coupon._doc, ...availedCoupon._doc, ownerAddress: owner.data.shop_name + ", " + owner.data.shop_city + ", " + owner.data.shop_state + ", " + owner.data.shop_pincode
         });
         // console.log({
         //    ...availedCoupon._doc, ...coupon._doc
@@ -375,6 +377,7 @@ const storeUsedCoupon = async (req, res) => {
     for (let couponId of req.user.createdCouponsId) {
       // console.log(couponId);
       const coupon = await Coupon.findById(couponId);
+      const owner = await User.findById(coupon.ownerId);
       // console.log(coupon);
 
       for (let consumerId of coupon.consumersId) {
@@ -393,7 +396,10 @@ const storeUsedCoupon = async (req, res) => {
               id: consumer._id,
               ...consumer.data
             },
-            couponDetail: usedCoupon
+            couponDetail: {
+              ...usedCoupon._doc,
+              ownerAddress: owner.data.shop_name + ", " + owner.data.shop_city + ", " + owner.data.shop_state + ", " + owner.data.shop_pincode
+            }
           });
         }
       }
