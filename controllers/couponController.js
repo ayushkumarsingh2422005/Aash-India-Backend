@@ -279,7 +279,12 @@ const updateCouponState = async (req, res) => {
     if (!availedCoupon) {
       return res.status(404).json({ message: "Coupon not found in availed coupons" });
     }
-
+    // if status is -1 then delete the coupon from availedCouponsId
+    if (status === -1) {
+      user.availedCouponsId = user.availedCouponsId.filter(coupon => coupon._id.toString() !== id);
+      await user.save();
+      return res.status(200).json({ message: "Coupon deleted successfully" });
+    }
     // Check if the provided status is valid and update the coupon's status
     if (status in statusMapping) {
       const coupon = await Coupon.findById(availedCoupon.couponId);
@@ -307,11 +312,11 @@ const updateCouponState = async (req, res) => {
 
 const getAvailedCoupon = async (req, res) => {
   try {
-    console.log(req.user.availedCouponsId);
+    
     let data = [];
     if (req.user.availedCouponsId != undefined) {
       for (let availedCoupon of req.user.availedCouponsId) {
-        // console.log(availedCoupons.consumerId);
+        console.log(availedCoupon.consumerId);
         // console.log(availCoupon)
         const coupon = await Coupon.findById(availedCoupon.couponId);
         const owner = await User.findById(coupon.ownerId);
