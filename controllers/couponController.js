@@ -90,7 +90,7 @@ const getall = async (req, res) => {
 
     let filter = {};
 
-    if (!req.user) {
+    if (!req.user || req.user.type !== 'partner') {
       // Get city from query and find owners in that city
       const city = req.query.city;
       let filter = {};
