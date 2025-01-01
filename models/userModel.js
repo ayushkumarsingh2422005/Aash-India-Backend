@@ -8,26 +8,25 @@ const userSchema = new mongoose.Schema({
   otp: { type: String, default: null },
   isVerified: { type: Boolean, default: false },
   isProfileCompleted: { type: Boolean, default: false },
+  // type: { type: String, required: true },
+  // data: { type: mongoose.Schema.Types.Mixed, required: false },
   type: { type: String, required: true, enum: ['partner', 'customer'] },
   data: {
-    type: {
-      // Common fields
-      firstname: { type: String },
-      lastname: { type: String },
-      gender: { type: String },
-      phonenumber: { type: String },
-      // Partner fields
-      shop_name: { type: String },
-      shop_city: { type: String },
-      shop_state: { type: String },
-      shop_pincode: { type: String },
-      shop_category: { type: String },
-      // Customer fields
-      city: { type: String },
-      state: { type: String },
-      pincode: { type: String }
-    },
-    required: false
+    // Common fields
+    firstname: { type: String },
+    lastname: { type: String },
+    gender: { type: String },
+    phonenumber: { type: String },
+    // Partner fields
+    shop_name: { type: String },
+    shop_city: { type: String },
+    shop_state: { type: String },
+    shop_pincode: { type: String },
+    shop_category: { type: String },
+    // Customer fields
+    city: { type: String },
+    state: { type: String },
+    pincode: { type: String }
   },
   profileImage: { type: String, required: false, unique: false },
   createdCouponsId: {
