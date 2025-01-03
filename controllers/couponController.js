@@ -410,22 +410,23 @@ const storeUsedCoupon = async (req, res) => {
 
       for (let consumerId of coupon.consumersId) {
         const consumer = await User.findById(consumerId);
-        console.log(consumer);
+        // console.log(consumer);
 
         // Filter consumer's availed coupons based on couponId
         const usedCoupon = consumer.availedCouponsId.filter((singleconsumer) => {
           // console.log(singleconsumer.consumerId, couponId);
           return singleconsumer.couponId.equals(couponId);
         });
-
+        
         if (usedCoupon.length > 0) {
+          // console.log(usedCoupon);
           response.push({
             consumerData: {
               id: consumer._id,
-              ...consumer.data
+              ...consumer.data._doc
             },
             couponDetail: {
-              ...usedCoupon._doc,
+              ...usedCoupon[0]._doc,
               ownerAddress: owner.data.shop_name + ", " + owner.data.shop_city + ", " + owner.data.shop_state + ", " + owner.data.shop_pincode
             }
           });
