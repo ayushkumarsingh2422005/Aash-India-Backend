@@ -135,9 +135,20 @@ const getall = async (req, res) => {
         }
       }
       coupons = await Coupon.find(filter);
-    }
+      
+      // For authenticated users, add the user's address to all coupons
+      let ownerAddress = "Address not available";
+      if (req.user && req.user.data) {
+        ownerAddress = req.user.data.firstname + ", " + req.user.data.city + ", " + req.user.data.state + ", " + req.user.data.pincode;
+      }
+      
+      const couponsWithAddress = coupons.map(coupon => ({
+        ...coupon._doc,
+        ownerAddress
+      }));
 
-    res.status(200).json(coupons);
+      res.status(200).json(couponsWithAddress);
+    }
   } catch (error) {
     res.status(500).json({
       message: 'Error fetching coupons',
